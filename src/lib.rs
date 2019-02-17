@@ -81,6 +81,11 @@ impl Registers {
 
 enum Instruction {
     ADD(ArithmeticRegisters),
+    ADDI(u8),
+    ADDA(),
+    ADC(ArithmeticRegisters),
+    ADCI(u8),
+    ADCA(),
 }
 
 enum ArithmeticRegisters {
@@ -106,26 +111,60 @@ impl CPU {
 
     fn execute(&mut self, instruction: Instruction) {
         match instruction {
-            Instruction::ADD(target) => {
-                self.execute_add(target);
+            Instruction::ADD(reg) => {
+                self.execute_add_reg(reg);
+            }
+            Instruction::ADDI(immediate) => {
+                self.execute_add_immediate(immediate);
+            }
+            Instruction::ADC(reg) => {
+                self.execute_adc_reg(reg);
+            }
+            Instruction::ADCI(immediate) => {
+                self.execute_adc_immediate(immediate);
             }
             _ => { /* TODO: support more instructions */ }
         }
     }
 
-    fn execute_add(&mut self, source: ArithmeticRegisters) {
-
+    fn execute_add_reg(&mut self, source: ArithmeticRegisters) {
         let source_value = self.registers.load(source);
+        self.execute_add_immediate(source_value);
+    }
 
-        let (new_value, overflow) = self.registers.A.overflowing_add(source_value);
+    fn execute_add_immediate(&mut self, immediate: u8) {
+        let (new_value, overflow) = self.registers.A.overflowing_add(immediate);
 
         self.registers.F.zero = new_value == 0;
         self.registers.F.operation = false;
-        self.registers.F.half_carry = (self.registers.A & 0xF) + (source_value & 0xF) > 0xF;
+        self.registers.F.half_carry = (self.registers.A & 0xF) + (immediate & 0xF) > 0xF;
         self.registers.F.carry = overflow;
 
         self.registers.A = new_value;
     }
+
+    fn execute_add_memory(&mut self, source: ArithmeticRegisters) {}
+
+    fn execute_adc_reg(&mut self, source: ArithmeticRegisters) {
+        let source_value = self.registers.load(source);
+        self.execute_adc_immediate(source_value);
+    }
+
+    fn execute_adc_immediate(&mut self, immediate: u8) {
+        let (new_value, overflow_1) = self.registers.A.overflowing_add(immediate);
+        let (new_value, overflow_2) = new_value.overflowing_add(
+            if self.registers.F.carry {1} else {0}
+        );
+
+        self.registers.F.zero = new_value == 0;
+        self.registers.F.operation = false;
+        self.registers.F.half_carry = (self.registers.A & 0xF) + (immediate & 0xF) + (if self.registers.F.carry {1} else {0}) > 0xF;
+        self.registers.F.carry = overflow_1 || overflow_2;
+
+        self.registers.A = new_value;
+    }
+
+    fn execute_adc_memory(&mut self, source: ArithmeticRegisters) {}
 }
 
 #[cfg(test)]
@@ -186,7 +225,7 @@ mod tests {
     }
 
     #[test]
-    fn test_execute_add_instruction_for_all_registers() {
+    fn test_execute_add_reg_for_all_registers() {
         let mut cpu = CPU::new();
 
         cpu.registers = Registers {
@@ -223,7 +262,7 @@ mod tests {
     }
 
     #[test]
-    fn test_execute_add_instruction_with_overflow() {
+    fn test_execute_add_reg_with_overflow() {
         let mut cpu = CPU::new();
 
         cpu.registers.A = 244;
@@ -231,6 +270,120 @@ mod tests {
 
         cpu.execute(Instruction::ADD(ArithmeticRegisters::B));
         assert_eq!(cpu.registers.A, (244 + 230) as u8);
+        assert_eq!(cpu.registers.F.carry, true);
+    }
+
+    #[test]
+    fn test_execute_add_immediate() {
+        let mut cpu = CPU::new();
+
+        cpu.registers.A = 244;
+        let immediate: u8 = 0;
+
+        cpu.execute(Instruction::ADDI(immediate));
+        assert_eq!(cpu.registers.A, 244);
+        assert_eq!(cpu.registers.F.carry, false);
+    }
+
+    #[test]
+    fn test_execute_add_immediate_with_overflow() {
+        let mut cpu = CPU::new();
+
+        cpu.registers.A = 244;
+        let immediate: u8 = 230;
+
+        cpu.execute(Instruction::ADDI(immediate));
+        assert_eq!(cpu.registers.A, (244 + 230) as u8);
+        assert_eq!(cpu.registers.F.carry, true);
+    }
+
+     #[test]
+    fn test_execute_adc_reg_for_all_registers() {
+        let mut cpu = CPU::new();
+
+        cpu.registers = Registers {
+            A: 1,
+            B: 2,
+            C: 3,
+            D: 4,
+            E: 5,
+            F: FlagsRegister::new(),
+            H: 6,
+            L: 7,
+        };
+
+        cpu.registers.F.carry = true;
+        cpu.execute(Instruction::ADC(ArithmeticRegisters::A));
+        assert_eq!(cpu.registers.A, 3);
+        assert_eq!(cpu.registers.F.carry, false);
+
+        cpu.registers.F.carry = true;
+        cpu.execute(Instruction::ADC(ArithmeticRegisters::B));
+        assert_eq!(cpu.registers.A, 6);
+        assert_eq!(cpu.registers.F.carry, false);
+
+        cpu.registers.F.carry = true;
+        cpu.execute(Instruction::ADC(ArithmeticRegisters::C));
+        assert_eq!(cpu.registers.A, 10);
+        assert_eq!(cpu.registers.F.carry, false);
+
+        cpu.registers.F.carry = true;
+        cpu.execute(Instruction::ADC(ArithmeticRegisters::D));
+        assert_eq!(cpu.registers.A, 15);
+        assert_eq!(cpu.registers.F.carry, false);
+
+        cpu.registers.F.carry = true;
+        cpu.execute(Instruction::ADC(ArithmeticRegisters::E));
+        assert_eq!(cpu.registers.A, 21);
+        assert_eq!(cpu.registers.F.carry, false);
+
+        cpu.registers.F.carry = true;
+        cpu.execute(Instruction::ADC(ArithmeticRegisters::H));
+        assert_eq!(cpu.registers.A, 28);
+        assert_eq!(cpu.registers.F.carry, false);
+
+        cpu.registers.F.carry = true;
+        cpu.execute(Instruction::ADC(ArithmeticRegisters::L));
+        assert_eq!(cpu.registers.A, 36);
+        assert_eq!(cpu.registers.F.carry, false);
+    }
+
+    #[test]
+    fn test_execute_adc_reg_with_overflow() {
+        let mut cpu = CPU::new();
+
+        cpu.registers.A = 244;
+        cpu.registers.B = 229;
+        cpu.registers.F.carry = true;
+
+        cpu.execute(Instruction::ADC(ArithmeticRegisters::B));
+        assert_eq!(cpu.registers.A, (244 + 229 + 1) as u8);
+        assert_eq!(cpu.registers.F.carry, true);
+    }
+
+    #[test]
+    fn test_execute_adc_immediate() {
+        let mut cpu = CPU::new();
+
+        cpu.registers.A = 244;
+        let immediate: u8 = 0;
+        cpu.registers.F.carry = true;
+
+        cpu.execute(Instruction::ADCI(immediate));
+        assert_eq!(cpu.registers.A, 245);
+        assert_eq!(cpu.registers.F.carry, false);
+    }
+
+    #[test]
+    fn test_execute_adc_immediate_with_overflow() {
+        let mut cpu = CPU::new();
+
+        cpu.registers.A = 244;
+        let immediate: u8 = 229;
+        cpu.registers.F.carry = true;
+
+        cpu.execute(Instruction::ADCI(immediate));
+        assert_eq!(cpu.registers.A, (244 + 229 + 1) as u8);
         assert_eq!(cpu.registers.F.carry, true);
     }
 
