@@ -1,0 +1,10 @@
+[package]
+name = "oxi-boy"
+version = "0.1.0"
+authors = ["Daniel Solis <solisherrerad@gmail.com>"]
+edition = "2018"
+license = "MIT"
+repository = "https://github.com/dsolisherrera/oxi-boy"
+readme = "README.md"
+
+[dependencies]
