@@ -46,6 +46,24 @@ impl CPU {
             Instruction::SBCI(immediate) => {
                 self.execute_sbc_immediate(immediate);
             }
+            Instruction::AND(reg) => {
+                self.execute_and_reg(reg);
+            }
+            Instruction::ANDI(immediate) => {
+                self.execute_and_immediate(immediate);
+            }
+            Instruction::OR(reg) => {
+                self.execute_or_reg(reg);
+            }
+            Instruction::ORI(immediate) => {
+                self.execute_or_immediate(immediate);
+            }
+            Instruction::XOR(reg) => {
+                self.execute_xor_reg(reg);
+            }
+            Instruction::XORI(immediate) => {
+                self.execute_xor_immediate(immediate);
+            }
             _ => { /* TODO: support more instructions */ }
         }
     }
@@ -131,6 +149,60 @@ impl CPU {
     }
 
     fn execute_scb_relative(&mut self, source: ArithmeticRegisters) {}
+
+    fn execute_and_reg(&mut self, source: ArithmeticRegisters) {
+        let source_value = self.registers.load(source);
+        self.execute_and_immediate(source_value);
+    }
+
+    fn execute_and_immediate(&mut self, immediate: u8) {
+        let new_value = self.registers.a & immediate;
+
+        self.registers.f.zero = new_value == 0;
+        self.registers.f.substraction = false;
+        self.registers.f.half_carry = true;
+        self.registers.f.carry = false;
+
+        self.registers.a = new_value;
+    }
+
+    fn execute_and_relative(&mut self, immediate: u8) {}
+
+    fn execute_or_reg(&mut self, source: ArithmeticRegisters) {
+        let source_value = self.registers.load(source);
+        self.execute_or_immediate(source_value);
+    }
+
+    fn execute_or_immediate(&mut self, immediate: u8) {
+        let new_value = self.registers.a | immediate;
+
+        self.registers.f.zero = new_value == 0;
+        self.registers.f.substraction = false;
+        self.registers.f.half_carry = false;
+        self.registers.f.carry = false;
+
+        self.registers.a = new_value;
+    }
+
+    fn execute_or_relative(&mut self, immediate: u8) {}
+
+    fn execute_xor_reg(&mut self, source: ArithmeticRegisters) {
+        let source_value = self.registers.load(source);
+        self.execute_xor_immediate(source_value);
+    }
+
+    fn execute_xor_immediate(&mut self, immediate: u8) {
+        let new_value = self.registers.a ^ immediate;
+
+        self.registers.f.zero = new_value == 0;
+        self.registers.f.substraction = false;
+        self.registers.f.half_carry = false;
+        self.registers.f.carry = false;
+
+        self.registers.a = new_value;
+    }
+
+    fn execute_xor_relative(&mut self, immediate: u8) {}
 }
 
 #[cfg(test)]
@@ -446,6 +518,127 @@ mod cpu_tests {
         cpu.execute(Instruction::SBCI(immediate));
         assert_eq!(cpu.registers.a, (0 - 1) as u8);
         assert_eq!(cpu.registers.f.carry, true);
+    }
+
+    #[test]
+    fn test_execute_and_reg() {
+        let mut cpu = CPU::new();
+
+        cpu.registers.a = 1;
+        cpu.registers.b = 3;
+        cpu.registers.c = 0;
+
+        cpu.execute(Instruction::AND(ArithmeticRegisters::B));
+        assert_eq!(cpu.registers.a, 1);
+        assert_eq!(cpu.registers.f.zero, false);
+        assert_eq!(cpu.registers.f.substraction, false);
+        assert_eq!(cpu.registers.f.half_carry, true);
+        assert_eq!(cpu.registers.f.carry, false);
+
+        cpu.execute(Instruction::AND(ArithmeticRegisters::C));
+        assert_eq!(cpu.registers.a, 0);
+        assert_eq!(cpu.registers.f.zero, true);
+        assert_eq!(cpu.registers.f.substraction, false);
+        assert_eq!(cpu.registers.f.half_carry, true);
+        assert_eq!(cpu.registers.f.carry, false);
+    }
+
+    #[test]
+    fn test_execute_and_immediate() {
+        let mut cpu = CPU::new();
+
+        cpu.registers.a = 3;
+        let immediate: u8 = 2;
+
+        cpu.execute(Instruction::ANDI(immediate));
+        assert_eq!(cpu.registers.a, 2);
+
+        assert_eq!(cpu.registers.f.zero, false);
+        assert_eq!(cpu.registers.f.substraction, false);
+        assert_eq!(cpu.registers.f.half_carry, true);
+        assert_eq!(cpu.registers.f.carry, false);
+    }
+
+    #[test]
+    fn test_execute_or_reg() {
+        let mut cpu = CPU::new();
+
+        cpu.registers.a = 1;
+        cpu.registers.b = 4;
+
+        cpu.execute(Instruction::OR(ArithmeticRegisters::B));
+        assert_eq!(cpu.registers.a, 5);
+        assert_eq!(cpu.registers.f.zero, false);
+        assert_eq!(cpu.registers.f.substraction, false);
+        assert_eq!(cpu.registers.f.half_carry, false);
+        assert_eq!(cpu.registers.f.carry, false);
+
+        cpu.registers.a = 0;
+        cpu.registers.c = 0;
+
+        cpu.execute(Instruction::OR(ArithmeticRegisters::C));
+        assert_eq!(cpu.registers.a, 0);
+        assert_eq!(cpu.registers.f.zero, true);
+        assert_eq!(cpu.registers.f.substraction, false);
+        assert_eq!(cpu.registers.f.half_carry, false);
+        assert_eq!(cpu.registers.f.carry, false);
+    }
+
+    #[test]
+    fn test_execute_or_immediate() {
+        let mut cpu = CPU::new();
+
+        cpu.registers.a = 1;
+        let immediate: u8 = 2;
+
+        cpu.execute(Instruction::ORI(immediate));
+        assert_eq!(cpu.registers.a, 3);
+
+        assert_eq!(cpu.registers.f.zero, false);
+        assert_eq!(cpu.registers.f.substraction, false);
+        assert_eq!(cpu.registers.f.half_carry, false);
+        assert_eq!(cpu.registers.f.carry, false);
+    }
+
+    #[test]
+    fn test_execute_xor_reg() {
+        let mut cpu = CPU::new();
+
+        cpu.registers.a = 5;
+        cpu.registers.b = 5;
+
+        cpu.execute(Instruction::XOR(ArithmeticRegisters::B));
+        assert_eq!(cpu.registers.a, 0);
+        assert_eq!(cpu.registers.f.zero, true);
+        assert_eq!(cpu.registers.f.substraction, false);
+        assert_eq!(cpu.registers.f.half_carry, false);
+        assert_eq!(cpu.registers.f.carry, false);
+
+        cpu.registers.a = 5;
+        cpu.registers.c = 2;
+
+        cpu.execute(Instruction::XOR(ArithmeticRegisters::C));
+        assert_eq!(cpu.registers.a, 7);
+        assert_eq!(cpu.registers.f.zero, false);
+        assert_eq!(cpu.registers.f.substraction, false);
+        assert_eq!(cpu.registers.f.half_carry, false);
+        assert_eq!(cpu.registers.f.carry, false);
+    }
+
+    #[test]
+    fn test_execute_xor_immediate() {
+        let mut cpu = CPU::new();
+
+        cpu.registers.a = 9;
+        let immediate: u8 = 6;
+
+        cpu.execute(Instruction::XORI(immediate));
+        assert_eq!(cpu.registers.a, 15);
+
+        assert_eq!(cpu.registers.f.zero, false);
+        assert_eq!(cpu.registers.f.substraction, false);
+        assert_eq!(cpu.registers.f.half_carry, false);
+        assert_eq!(cpu.registers.f.carry, false);
     }
 
 }
