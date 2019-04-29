@@ -4,4 +4,4 @@
 
 A GameBoy emulator written in Rust.
 
-I love games and what better way to learning and practice a new programming language than by making it about something you like.
+I love games and what better way to learn and practice a new programming language than by making it about something you like.
