@@ -3,39 +3,39 @@ use super::instructions::ArithmeticRegisters;
 
 #[derive(Default)]
 pub struct Registers {
-    pub A: u8,
-    pub B: u8,
-    pub C: u8,
-    pub D: u8,
-    pub E: u8,
-    pub F: FlagsRegister,
-    pub H: u8,
-    pub L: u8,
+    pub a: u8,
+    pub b: u8,
+    pub c: u8,
+    pub d: u8,
+    pub e: u8,
+    pub f: FlagsRegister,
+    pub h: u8,
+    pub l: u8,
 }
 
 impl Registers {
     pub fn new() -> Self {
         Self {
-            A: 0,
-            B: 0,
-            C: 0,
-            D: 0,
-            E: 0,
-            F: FlagsRegister::new(),
-            H: 0,
-            L: 0,
+            a: 0,
+            b: 0,
+            c: 0,
+            d: 0,
+            e: 0,
+            f: FlagsRegister::new(),
+            h: 0,
+            l: 0,
         }
     }
 
     pub fn load(&self, reg: ArithmeticRegisters) -> u8 {
         match reg {
-            ArithmeticRegisters::A => self.A,
-            ArithmeticRegisters::B => self.B,
-            ArithmeticRegisters::C => self.C,
-            ArithmeticRegisters::D => self.D,
-            ArithmeticRegisters::E => self.E,
-            ArithmeticRegisters::H => self.H,
-            ArithmeticRegisters::L => self.L,
+            ArithmeticRegisters::A => self.a,
+            ArithmeticRegisters::B => self.b,
+            ArithmeticRegisters::C => self.c,
+            ArithmeticRegisters::D => self.d,
+            ArithmeticRegisters::E => self.e,
+            ArithmeticRegisters::H => self.h,
+            ArithmeticRegisters::L => self.l,
         }
     }
 }
@@ -48,56 +48,56 @@ mod registers_tests {
     fn test_load_works_for_reg_a() {
         let mut registers: Registers = Default::default();
 
-        registers.A = 1;
-        assert_eq!(registers.load(ArithmeticRegisters::A), registers.A);
+        registers.a = 1;
+        assert_eq!(registers.load(ArithmeticRegisters::A), registers.a);
     }
 
     #[test]
     fn test_load_works_for_reg_b() {
         let mut registers: Registers = Default::default();
 
-        registers.B = 1;
-        assert_eq!(registers.load(ArithmeticRegisters::B), registers.B);
+        registers.b = 1;
+        assert_eq!(registers.load(ArithmeticRegisters::B), registers.b);
     }
 
     #[test]
     fn test_load_works_for_reg_c() {
         let mut registers: Registers = Default::default();
 
-        registers.C = 1;
-        assert_eq!(registers.load(ArithmeticRegisters::C), registers.C);
+        registers.c = 1;
+        assert_eq!(registers.load(ArithmeticRegisters::C), registers.c);
     }
 
     #[test]
     fn test_load_works_for_reg_d() {
         let mut registers: Registers = Default::default();
 
-        registers.D = 1;
-        assert_eq!(registers.load(ArithmeticRegisters::D), registers.D);
+        registers.d = 1;
+        assert_eq!(registers.load(ArithmeticRegisters::D), registers.d);
     }
 
     #[test]
     fn test_load_works_for_reg_e() {
         let mut registers: Registers = Default::default();
 
-        registers.E = 1;
-        assert_eq!(registers.load(ArithmeticRegisters::E), registers.E);
+        registers.e = 1;
+        assert_eq!(registers.load(ArithmeticRegisters::E), registers.e);
     }
 
     #[test]
     fn test_load_works_for_reg_h() {
         let mut registers: Registers = Default::default();
 
-        registers.H = 1;
-        assert_eq!(registers.load(ArithmeticRegisters::H), registers.H);
+        registers.h = 1;
+        assert_eq!(registers.load(ArithmeticRegisters::H), registers.h);
     }
 
     #[test]
     fn test_load_works_for_reg_l() {
         let mut registers: Registers = Default::default();
 
-        registers.L = 1;
-        assert_eq!(registers.load(ArithmeticRegisters::L), registers.L);
+        registers.l = 1;
+        assert_eq!(registers.load(ArithmeticRegisters::L), registers.l);
     }
 
 }

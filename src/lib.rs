@@ -56,14 +56,14 @@ impl CPU {
     }
 
     fn execute_add_immediate(&mut self, immediate: u8) {
-        let (new_value, overflow) = self.registers.A.overflowing_add(immediate);
+        let (new_value, overflow) = self.registers.a.overflowing_add(immediate);
 
-        self.registers.F.zero = new_value == 0;
-        self.registers.F.substraction = false;
-        self.registers.F.half_carry = (self.registers.A & 0xF) + (immediate & 0xF) > 0xF;
-        self.registers.F.carry = overflow;
+        self.registers.f.zero = new_value == 0;
+        self.registers.f.substraction = false;
+        self.registers.f.half_carry = (self.registers.a & 0xF) + (immediate & 0xF) > 0xF;
+        self.registers.f.carry = overflow;
 
-        self.registers.A = new_value;
+        self.registers.a = new_value;
     }
 
     fn execute_add_relative(&mut self, source: ArithmeticRegisters) {}
@@ -74,19 +74,19 @@ impl CPU {
     }
 
     fn execute_adc_immediate(&mut self, immediate: u8) {
-        let (new_value, overflow_1) = self.registers.A.overflowing_add(immediate);
+        let (new_value, overflow_1) = self.registers.a.overflowing_add(immediate);
         let (new_value, overflow_2) =
-            new_value.overflowing_add(if self.registers.F.carry { 1 } else { 0 });
+            new_value.overflowing_add(if self.registers.f.carry { 1 } else { 0 });
 
-        self.registers.F.zero = new_value == 0;
-        self.registers.F.substraction = false;
-        self.registers.F.half_carry = (self.registers.A & 0xF)
+        self.registers.f.zero = new_value == 0;
+        self.registers.f.substraction = false;
+        self.registers.f.half_carry = (self.registers.a & 0xF)
             + (immediate & 0xF)
-            + (if self.registers.F.carry { 1 } else { 0 })
+            + (if self.registers.f.carry { 1 } else { 0 })
             > 0xF;
-        self.registers.F.carry = overflow_1 || overflow_2;
+        self.registers.f.carry = overflow_1 || overflow_2;
 
-        self.registers.A = new_value;
+        self.registers.a = new_value;
     }
 
     fn execute_adc_relative(&mut self, source: ArithmeticRegisters) {}
@@ -97,14 +97,14 @@ impl CPU {
     }
 
     fn execute_sub_immediate(&mut self, immediate: u8) {
-        let (new_value, overflow) = self.registers.A.overflowing_sub(immediate);
+        let (new_value, overflow) = self.registers.a.overflowing_sub(immediate);
 
-        self.registers.F.zero = new_value == 0;
-        self.registers.F.substraction = true;
-        self.registers.F.half_carry = (self.registers.A & 0xF) + (immediate & 0xF) > 0xF;
-        self.registers.F.carry = overflow;
+        self.registers.f.zero = new_value == 0;
+        self.registers.f.substraction = true;
+        self.registers.f.half_carry = (self.registers.a & 0xF) + (immediate & 0xF) > 0xF;
+        self.registers.f.carry = overflow;
 
-        self.registers.A = new_value;
+        self.registers.a = new_value;
     }
 
     fn execute_sub_relative(&mut self, source: ArithmeticRegisters) {}
@@ -115,19 +115,19 @@ impl CPU {
     }
 
     fn execute_sbc_immediate(&mut self, immediate: u8) {
-        let (new_value, overflow_1) = self.registers.A.overflowing_sub(immediate);
+        let (new_value, overflow_1) = self.registers.a.overflowing_sub(immediate);
         let (new_value, overflow_2) =
-            new_value.overflowing_sub(if self.registers.F.carry { 1 } else { 0 });
+            new_value.overflowing_sub(if self.registers.f.carry { 1 } else { 0 });
 
-        self.registers.F.zero = new_value == 0;
-        self.registers.F.substraction = true;
-        self.registers.F.half_carry = (self.registers.A & 0xF)
+        self.registers.f.zero = new_value == 0;
+        self.registers.f.substraction = true;
+        self.registers.f.half_carry = (self.registers.a & 0xF)
             + (immediate & 0xF)
-            + (if self.registers.F.carry { 1 } else { 0 })
+            + (if self.registers.f.carry { 1 } else { 0 })
             > 0xF;
-        self.registers.F.carry = overflow_1 || overflow_2;
+        self.registers.f.carry = overflow_1 || overflow_2;
 
-        self.registers.A = new_value;
+        self.registers.a = new_value;
     }
 
     fn execute_scb_relative(&mut self, source: ArithmeticRegisters) {}
@@ -142,74 +142,74 @@ mod cpu_tests {
         let mut cpu = CPU::new();
 
         cpu.registers = Registers {
-            A: 1,
-            B: 2,
-            C: 3,
-            D: 4,
-            E: 5,
-            F: FlagsRegister::new(),
-            H: 6,
-            L: 7,
+            a: 1,
+            b: 2,
+            c: 3,
+            d: 4,
+            e: 5,
+            f: FlagsRegister::new(),
+            h: 6,
+            l: 7,
         };
 
         cpu.execute(Instruction::ADD(ArithmeticRegisters::A));
-        assert_eq!(cpu.registers.A, 2);
-        assert_eq!(cpu.registers.F.substraction, false);
+        assert_eq!(cpu.registers.a, 2);
+        assert_eq!(cpu.registers.f.substraction, false);
 
         cpu.execute(Instruction::ADD(ArithmeticRegisters::B));
-        assert_eq!(cpu.registers.A, 4);
+        assert_eq!(cpu.registers.a, 4);
 
         cpu.execute(Instruction::ADD(ArithmeticRegisters::C));
-        assert_eq!(cpu.registers.A, 7);
+        assert_eq!(cpu.registers.a, 7);
 
         cpu.execute(Instruction::ADD(ArithmeticRegisters::D));
-        assert_eq!(cpu.registers.A, 11);
+        assert_eq!(cpu.registers.a, 11);
 
         cpu.execute(Instruction::ADD(ArithmeticRegisters::E));
-        assert_eq!(cpu.registers.A, 16);
+        assert_eq!(cpu.registers.a, 16);
 
         cpu.execute(Instruction::ADD(ArithmeticRegisters::H));
-        assert_eq!(cpu.registers.A, 22);
+        assert_eq!(cpu.registers.a, 22);
 
         cpu.execute(Instruction::ADD(ArithmeticRegisters::L));
-        assert_eq!(cpu.registers.A, 29);
+        assert_eq!(cpu.registers.a, 29);
     }
 
     #[test]
     fn test_execute_add_reg_with_overflow() {
         let mut cpu = CPU::new();
 
-        cpu.registers.A = 244;
-        cpu.registers.B = 230;
+        cpu.registers.a = 244;
+        cpu.registers.b = 230;
 
         cpu.execute(Instruction::ADD(ArithmeticRegisters::B));
-        assert_eq!(cpu.registers.A, (244 + 230) as u8);
-        assert_eq!(cpu.registers.F.carry, true);
+        assert_eq!(cpu.registers.a, (244 + 230) as u8);
+        assert_eq!(cpu.registers.f.carry, true);
     }
 
     #[test]
     fn test_execute_add_immediate() {
         let mut cpu = CPU::new();
 
-        cpu.registers.A = 244;
+        cpu.registers.a = 244;
         let immediate: u8 = 0;
 
         cpu.execute(Instruction::ADDI(immediate));
-        assert_eq!(cpu.registers.A, 244);
-        assert_eq!(cpu.registers.F.carry, false);
-        assert_eq!(cpu.registers.F.substraction, false);
+        assert_eq!(cpu.registers.a, 244);
+        assert_eq!(cpu.registers.f.carry, false);
+        assert_eq!(cpu.registers.f.substraction, false);
     }
 
     #[test]
     fn test_execute_add_immediate_with_overflow() {
         let mut cpu = CPU::new();
 
-        cpu.registers.A = 244;
+        cpu.registers.a = 244;
         let immediate: u8 = 230;
 
         cpu.execute(Instruction::ADDI(immediate));
-        assert_eq!(cpu.registers.A, (244 + 230) as u8);
-        assert_eq!(cpu.registers.F.carry, true);
+        assert_eq!(cpu.registers.a, (244 + 230) as u8);
+        assert_eq!(cpu.registers.f.carry, true);
     }
 
     #[test]
@@ -217,89 +217,89 @@ mod cpu_tests {
         let mut cpu = CPU::new();
 
         cpu.registers = Registers {
-            A: 1,
-            B: 2,
-            C: 3,
-            D: 4,
-            E: 5,
-            F: FlagsRegister::new(),
-            H: 6,
-            L: 7,
+            a: 1,
+            b: 2,
+            c: 3,
+            d: 4,
+            e: 5,
+            f: FlagsRegister::new(),
+            h: 6,
+            l: 7,
         };
 
-        cpu.registers.F.carry = true;
+        cpu.registers.f.carry = true;
         cpu.execute(Instruction::ADC(ArithmeticRegisters::A));
-        assert_eq!(cpu.registers.A, 3);
-        assert_eq!(cpu.registers.F.carry, false);
+        assert_eq!(cpu.registers.a, 3);
+        assert_eq!(cpu.registers.f.carry, false);
 
-        cpu.registers.F.carry = true;
+        cpu.registers.f.carry = true;
         cpu.execute(Instruction::ADC(ArithmeticRegisters::B));
-        assert_eq!(cpu.registers.A, 6);
-        assert_eq!(cpu.registers.F.carry, false);
+        assert_eq!(cpu.registers.a, 6);
+        assert_eq!(cpu.registers.f.carry, false);
 
-        cpu.registers.F.carry = true;
+        cpu.registers.f.carry = true;
         cpu.execute(Instruction::ADC(ArithmeticRegisters::C));
-        assert_eq!(cpu.registers.A, 10);
-        assert_eq!(cpu.registers.F.carry, false);
+        assert_eq!(cpu.registers.a, 10);
+        assert_eq!(cpu.registers.f.carry, false);
 
-        cpu.registers.F.carry = true;
+        cpu.registers.f.carry = true;
         cpu.execute(Instruction::ADC(ArithmeticRegisters::D));
-        assert_eq!(cpu.registers.A, 15);
-        assert_eq!(cpu.registers.F.carry, false);
+        assert_eq!(cpu.registers.a, 15);
+        assert_eq!(cpu.registers.f.carry, false);
 
-        cpu.registers.F.carry = true;
+        cpu.registers.f.carry = true;
         cpu.execute(Instruction::ADC(ArithmeticRegisters::E));
-        assert_eq!(cpu.registers.A, 21);
-        assert_eq!(cpu.registers.F.carry, false);
+        assert_eq!(cpu.registers.a, 21);
+        assert_eq!(cpu.registers.f.carry, false);
 
-        cpu.registers.F.carry = true;
+        cpu.registers.f.carry = true;
         cpu.execute(Instruction::ADC(ArithmeticRegisters::H));
-        assert_eq!(cpu.registers.A, 28);
-        assert_eq!(cpu.registers.F.carry, false);
+        assert_eq!(cpu.registers.a, 28);
+        assert_eq!(cpu.registers.f.carry, false);
 
-        cpu.registers.F.carry = true;
+        cpu.registers.f.carry = true;
         cpu.execute(Instruction::ADC(ArithmeticRegisters::L));
-        assert_eq!(cpu.registers.A, 36);
-        assert_eq!(cpu.registers.F.carry, false);
+        assert_eq!(cpu.registers.a, 36);
+        assert_eq!(cpu.registers.f.carry, false);
     }
 
     #[test]
     fn test_execute_adc_reg_with_overflow() {
         let mut cpu = CPU::new();
 
-        cpu.registers.A = 244;
-        cpu.registers.B = 229;
-        cpu.registers.F.carry = true;
+        cpu.registers.a = 244;
+        cpu.registers.b = 229;
+        cpu.registers.f.carry = true;
 
         cpu.execute(Instruction::ADC(ArithmeticRegisters::B));
-        assert_eq!(cpu.registers.A, (244 + 229 + 1) as u8);
-        assert_eq!(cpu.registers.F.carry, true);
+        assert_eq!(cpu.registers.a, (244 + 229 + 1) as u8);
+        assert_eq!(cpu.registers.f.carry, true);
     }
 
     #[test]
     fn test_execute_adc_immediate() {
         let mut cpu = CPU::new();
 
-        cpu.registers.A = 244;
+        cpu.registers.a = 244;
         let immediate: u8 = 0;
-        cpu.registers.F.carry = true;
+        cpu.registers.f.carry = true;
 
         cpu.execute(Instruction::ADCI(immediate));
-        assert_eq!(cpu.registers.A, 245);
-        assert_eq!(cpu.registers.F.carry, false);
+        assert_eq!(cpu.registers.a, 245);
+        assert_eq!(cpu.registers.f.carry, false);
     }
 
     #[test]
     fn test_execute_adc_immediate_with_overflow() {
         let mut cpu = CPU::new();
 
-        cpu.registers.A = 244;
+        cpu.registers.a = 244;
         let immediate: u8 = 229;
-        cpu.registers.F.carry = true;
+        cpu.registers.f.carry = true;
 
         cpu.execute(Instruction::ADCI(immediate));
-        assert_eq!(cpu.registers.A, (244 + 229 + 1) as u8);
-        assert_eq!(cpu.registers.F.carry, true);
+        assert_eq!(cpu.registers.a, (244 + 229 + 1) as u8);
+        assert_eq!(cpu.registers.f.carry, true);
     }
 
     #[test]
@@ -307,71 +307,71 @@ mod cpu_tests {
         let mut cpu = CPU::new();
 
         cpu.registers = Registers {
-            A: 29,
-            B: 2,
-            C: 3,
-            D: 4,
-            E: 5,
-            F: FlagsRegister::new(),
-            H: 6,
-            L: 7,
+            a: 29,
+            b: 2,
+            c: 3,
+            d: 4,
+            e: 5,
+            f: FlagsRegister::new(),
+            h: 6,
+            l: 7,
         };
 
         cpu.execute(Instruction::SUB(ArithmeticRegisters::B));
-        assert_eq!(cpu.registers.A, 27);
+        assert_eq!(cpu.registers.a, 27);
 
         cpu.execute(Instruction::SUB(ArithmeticRegisters::C));
-        assert_eq!(cpu.registers.A, 24);
+        assert_eq!(cpu.registers.a, 24);
 
         cpu.execute(Instruction::SUB(ArithmeticRegisters::D));
-        assert_eq!(cpu.registers.A, 20);
+        assert_eq!(cpu.registers.a, 20);
 
         cpu.execute(Instruction::SUB(ArithmeticRegisters::E));
-        assert_eq!(cpu.registers.A, 15);
+        assert_eq!(cpu.registers.a, 15);
 
         cpu.execute(Instruction::SUB(ArithmeticRegisters::H));
-        assert_eq!(cpu.registers.A, 9);
+        assert_eq!(cpu.registers.a, 9);
 
         cpu.execute(Instruction::SUB(ArithmeticRegisters::L));
-        assert_eq!(cpu.registers.A, 2);
-        assert_eq!(cpu.registers.F.carry, false);
-        assert_eq!(cpu.registers.F.substraction, true);
+        assert_eq!(cpu.registers.a, 2);
+        assert_eq!(cpu.registers.f.carry, false);
+        assert_eq!(cpu.registers.f.substraction, true);
     }
 
     #[test]
     fn test_execute_sub_reg_from_itself_gives_zero() {
         let mut cpu = CPU::new();
 
-        cpu.registers.A = 255;
+        cpu.registers.a = 255;
 
         cpu.execute(Instruction::SUB(ArithmeticRegisters::A));
-        assert_eq!(cpu.registers.A, 0);
-        assert_eq!(cpu.registers.F.zero, true);
-        assert_eq!(cpu.registers.F.substraction, true);
+        assert_eq!(cpu.registers.a, 0);
+        assert_eq!(cpu.registers.f.zero, true);
+        assert_eq!(cpu.registers.f.substraction, true);
     }
 
     #[test]
     fn test_execute_sub_reg_with_overflow() {
         let mut cpu = CPU::new();
 
-        cpu.registers.A = 2;
-        cpu.registers.B = 230;
+        cpu.registers.a = 2;
+        cpu.registers.b = 230;
 
         cpu.execute(Instruction::SUB(ArithmeticRegisters::B));
-        assert_eq!(cpu.registers.A, (2 - 230) as u8);
-        assert_eq!(cpu.registers.F.carry, true);
+        assert_eq!(cpu.registers.a, (2 - 230) as u8);
+        assert_eq!(cpu.registers.f.carry, true);
     }
 
     #[test]
     fn test_execute_sub_immediate() {
         let mut cpu = CPU::new();
 
-        cpu.registers.A = 244;
+        cpu.registers.a = 244;
         let immediate: u8 = 1;
 
         cpu.execute(Instruction::SUBI(immediate));
-        assert_eq!(cpu.registers.A, 243);
-        assert_eq!(cpu.registers.F.substraction, true);
+        assert_eq!(cpu.registers.a, 243);
+        assert_eq!(cpu.registers.f.substraction, true);
     }
 
     #[test]
@@ -379,73 +379,73 @@ mod cpu_tests {
         let mut cpu = CPU::new();
 
         cpu.registers = Registers {
-            A: 36,
-            B: 2,
-            C: 3,
-            D: 4,
-            E: 5,
-            F: FlagsRegister::new(),
-            H: 6,
-            L: 7,
+            a: 36,
+            b: 2,
+            c: 3,
+            d: 4,
+            e: 5,
+            f: FlagsRegister::new(),
+            h: 6,
+            l: 7,
         };
 
-        cpu.registers.F.carry = true;
+        cpu.registers.f.carry = true;
         cpu.execute(Instruction::SBC(ArithmeticRegisters::B));
-        assert_eq!(cpu.registers.A, 33);
-        assert_eq!(cpu.registers.F.carry, false);
+        assert_eq!(cpu.registers.a, 33);
+        assert_eq!(cpu.registers.f.carry, false);
 
-        cpu.registers.F.carry = true;
+        cpu.registers.f.carry = true;
         cpu.execute(Instruction::SBC(ArithmeticRegisters::C));
-        assert_eq!(cpu.registers.A, 29);
-        assert_eq!(cpu.registers.F.carry, false);
+        assert_eq!(cpu.registers.a, 29);
+        assert_eq!(cpu.registers.f.carry, false);
 
-        cpu.registers.F.carry = true;
+        cpu.registers.f.carry = true;
         cpu.execute(Instruction::SBC(ArithmeticRegisters::D));
-        assert_eq!(cpu.registers.A, 24);
-        assert_eq!(cpu.registers.F.carry, false);
+        assert_eq!(cpu.registers.a, 24);
+        assert_eq!(cpu.registers.f.carry, false);
 
-        cpu.registers.F.carry = true;
+        cpu.registers.f.carry = true;
         cpu.execute(Instruction::SBC(ArithmeticRegisters::E));
-        assert_eq!(cpu.registers.A, 18);
-        assert_eq!(cpu.registers.F.carry, false);
+        assert_eq!(cpu.registers.a, 18);
+        assert_eq!(cpu.registers.f.carry, false);
 
-        cpu.registers.F.carry = true;
+        cpu.registers.f.carry = true;
         cpu.execute(Instruction::SBC(ArithmeticRegisters::H));
-        assert_eq!(cpu.registers.A, 11);
-        assert_eq!(cpu.registers.F.carry, false);
+        assert_eq!(cpu.registers.a, 11);
+        assert_eq!(cpu.registers.f.carry, false);
 
-        cpu.registers.F.carry = true;
+        cpu.registers.f.carry = true;
         cpu.execute(Instruction::SBC(ArithmeticRegisters::L));
-        assert_eq!(cpu.registers.A, 3);
-        assert_eq!(cpu.registers.F.carry, false);
+        assert_eq!(cpu.registers.a, 3);
+        assert_eq!(cpu.registers.f.carry, false);
 
-        assert_eq!(cpu.registers.F.substraction, true);
+        assert_eq!(cpu.registers.f.substraction, true);
     }
 
     #[test]
     fn test_execute_sbc_immediate() {
         let mut cpu = CPU::new();
 
-        cpu.registers.A = 244;
+        cpu.registers.a = 244;
         let immediate: u8 = 100;
-        cpu.registers.F.carry = true;
+        cpu.registers.f.carry = true;
 
         cpu.execute(Instruction::SBCI(immediate));
-        assert_eq!(cpu.registers.A, 143);
-        assert_eq!(cpu.registers.F.carry, false);
+        assert_eq!(cpu.registers.a, 143);
+        assert_eq!(cpu.registers.f.carry, false);
     }
 
     #[test]
     fn test_execute_sbc_immediate_with_overflow() {
         let mut cpu = CPU::new();
 
-        cpu.registers.A = 10;
+        cpu.registers.a = 10;
         let immediate: u8 = 10;
-        cpu.registers.F.carry = true;
+        cpu.registers.f.carry = true;
 
         cpu.execute(Instruction::SBCI(immediate));
-        assert_eq!(cpu.registers.A, (0 - 1) as u8);
-        assert_eq!(cpu.registers.F.carry, true);
+        assert_eq!(cpu.registers.a, (0 - 1) as u8);
+        assert_eq!(cpu.registers.f.carry, true);
     }
 
 }
